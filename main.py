@@ -6,11 +6,13 @@ import sys
 from dotenv import load_dotenv
 
 # Configure Tesseract path for Windows
-# Update this path if Tesseract is installed in a different location
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
+// Update this path via env `TESSERACT_PATH` or fallback default
 # Load environment variables from .env if present
 load_dotenv()
+
+default_tesseract = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+tesseract_path = os.getenv('TESSERACT_PATH') or default_tesseract
+pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
 # Get API key from environment variable (supports .env)
 api_key = os.getenv('GROQ_API_KEY')
@@ -87,8 +89,8 @@ if __name__ == '__main__':
         print("Success! Receipt data saved to receipt.json")
         print(json_data)
     except Exception as e:
-        print(f"Error calling OpenAI API: {e}")
+        print(f"Error calling Groq API: {e}")
         print("\nPlease check:")
         print("1. Your API key is valid")
-        print("2. You have sufficient credits at https://platform.openai.com/account/billing")
+        print("2. Your account is active at https://console.groq.com/")
         sys.exit(1)
