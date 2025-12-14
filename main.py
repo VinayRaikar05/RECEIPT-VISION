@@ -1,10 +1,26 @@
 import cv2
 import pytesseract
-from openai import OpenAI
+from groq import Groq
+import os
+import sys
+from dotenv import load_dotenv
 
-ai_client = OpenAI(
-    api_key="YOUR_OPEN_AI_API_KEY"
-)
+# Configure Tesseract path for Windows
+# Update this path if Tesseract is installed in a different location
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Load environment variables from .env if present
+load_dotenv()
+
+# Get API key from environment variable (supports .env)
+api_key = os.getenv('GROQ_API_KEY')
+if not api_key:
+    print("Error: GROQ_API_KEY environment variable not set.")
+    print("Set it in a .env file like: GROQ_API_KEY=your-api-key-here")
+    print("Get your free API key at: https://console.groq.com/")
+    sys.exit(1)
+
+ai_client = Groq(api_key=api_key)
 
 def preprocess_image(image):
     image = cv2.imread(image)
@@ -35,7 +51,7 @@ def ai_extract(text_content):
     Do not return anything else. Here is the text extracted from the receipt: """ + text_content
 
     response = ai_client.chat.completions.create(
-        model="gpt-4o",
+        model="llama-3.3-70b-versatile",
         messages=[
             {
                 "role": "user",
@@ -49,12 +65,30 @@ def ai_extract(text_content):
 if __name__ == '__main__':
 
     image_path = "receipt.jpg"
+    
+    if not os.path.exists(image_path):
+        print(f"Error: {image_path} not found!")
+        sys.exit(1)
 
     preprocessed_image = preprocess_image(image_path)
 
     text_content = extract_text(preprocessed_image)
+    
+    print("Extracted text from receipt:")
+    print(text_content)
+    print("\n" + "="*50 + "\n")
 
-    json_data = ai_extract(text_content)
-
-    with open('receipt.json', 'w') as f:
-        f.write(json_data)
+    try:
+        json_data = ai_extract(text_content)
+        
+        with open('receipt.json', 'w') as f:
+            f.write(json_data)
+        
+        print("Success! Receipt data saved to receipt.json")
+        print(json_data)
+    except Exception as e:
+        print(f"Error calling OpenAI API: {e}")
+        print("\nPlease check:")
+        print("1. Your API key is valid")
+        print("2. You have sufficient credits at https://platform.openai.com/account/billing")
+        sys.exit(1)

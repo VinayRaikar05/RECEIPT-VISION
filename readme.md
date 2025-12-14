@@ -7,7 +7,7 @@ This project extracts text from an image of a store receipt and converts it into
 - Python 3.x
 - OpenCV
 - Pytesseract
-- OpenAI Python client
+- Groq Python client (free API)
 
 ## Installation
 
@@ -17,15 +17,24 @@ This project extracts text from an image of a store receipt and converts it into
     cd <repository-directory>
     ```
 
-2. Install the required packages:
+2. **Install Tesseract OCR (Windows):**
+    - Download from: https://github.com/UB-Mannheim/tesseract/wiki
+    - Run the installer (e.g., tesseract-ocr-w64-setup-5.3.x.exe)
+    - During installation, note the path (usually `C:\Program Files\Tesseract-OCR`)
+    - Update the path in [main.py](main.py) if installed in a different location
+
+3. Install the required Python packages:
     ```sh
     pip install -r requirements.txt
     ```
 
-3. Add your OpenAI API key in [main.py]:
-    ```python
-    ai_client = OpenAI(
-        api_key="YOUR_OPEN_AI_API_KEY"
+4. Get a free Groq API key and set it via `.env`:
+    - Sign up for free at: https://console.groq.com/
+    - Copy `.env.example` to `.env` and edit:
+        ```
+        GROQ_API_KEY=your-groq-api-key-here
+        ```
+    - Do not commit secrets to git. Regenerate the key if it was exposed
     )
     ```
 
