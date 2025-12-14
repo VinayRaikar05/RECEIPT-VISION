@@ -6,7 +6,7 @@ import sys
 from dotenv import load_dotenv
 
 # Configure Tesseract path for Windows
-// Update this path via env `TESSERACT_PATH` or fallback default
+# Update this path via env `TESSERACT_PATH` or fallback default
 # Load environment variables from .env if present
 load_dotenv()
 
