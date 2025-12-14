@@ -30,7 +30,7 @@ This project extracts text from an image of a store receipt and converts it into
 
 4. Get a free Groq API key and set it via `.env`:
     - Sign up for free at: https://console.groq.com/
-    - Copy `.env.example` to `.env` and edit:
+    - Copy `env.example` to `.env` and edit:
         ```
         GROQ_API_KEY=your-groq-api-key-here
         ```
