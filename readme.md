@@ -59,6 +59,4 @@ This project extracts text from an image of a store receipt and converts it into
 
 This project is licensed under the MIT License.
 
-## Credit
 
-This project was created by [Tom Shaw](https://tomshaw.dev)
