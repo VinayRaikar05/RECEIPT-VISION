@@ -1,7 +1,8 @@
-opencv-python
+opencv-python-headless
 pytesseract
 groq
 python-dotenv
 flask
 werkzeug
 gunicorn
+httpx

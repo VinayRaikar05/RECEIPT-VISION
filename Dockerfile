@@ -29,5 +29,15 @@ ENV FLASK_ENV=production
 ENV FLASK_HOST=0.0.0.0
 ENV FLASK_PORT=5000
 
-# Run application with Gunicorn
-CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --timeout 120 --access-logfile - --error-logfile - app:app
+# Run application with Gunicorn (optimized settings)
+CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} \
+    --workers 2 \
+    --threads 2 \
+    --timeout 60 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    app:app

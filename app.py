@@ -31,53 +31,64 @@ if not api_key:
     print("Set it in a .env file like: GROQ_API_KEY=your-api-key-here")
     print("Get your free API key at: https://console.groq.com/")
 
-ai_client = Groq(api_key=api_key) if api_key else None
+# Configure Groq client with timeout to prevent hanging
+import httpx
+ai_client = Groq(
+    api_key=api_key,
+    timeout=httpx.Timeout(30.0, connect=5.0),  # 30s total, 5s connect
+    max_retries=2
+) if api_key else None
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB max file size (reduced for faster upload)
+app.config['JSON_SORT_KEYS'] = False  # Faster JSON serialization
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+
+# Enable response compression
+from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def preprocess_image(image_path):
     """Preprocess image for OCR"""
-    image = cv2.imread(image_path)
+    # Read image directly in grayscale to save memory and processing time
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if image is None:
         raise ValueError("Could not read image file")
     
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # Apply thresholding
-    _, threshold = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # Apply adaptive thresholding for better results on varied receipts
+    threshold = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     
     return threshold
 
 def extract_text(image):
     """Extract text from image using Tesseract"""
-    return pytesseract.image_to_string(image)
+    # Use PSM 6 (uniform block of text) which is faster for receipts
+    custom_config = r'--oem 3 --psm 6'
+    return pytesseract.image_to_string(image, config=custom_config)
 
 def ai_extract(text_content):
     """Extract structured JSON from OCR text using Groq AI"""
     if not ai_client:
         raise ValueError("GROQ_API_KEY not configured")
     
-    prompt = """You are a receipt parser AI. I am going to provide you with text extracted from an image of a store receipt.
-    I need you to return a JSON object with this structure:
-    {"total", "business", "items": [{"title", "quantity", "price"}], "transaction_timestamp"}.
-    Return the prices as integers that represent the number of pennies (£1 = 100) Only return the JSON object.
-    Do not return anything else. Here is the text extracted from the receipt: """ + text_content
+    # Truncate text if too long to speed up processing
+    max_text_length = 2000
+    if len(text_content) > max_text_length:
+        text_content = text_content[:max_text_length]
+    
+    # Shortened, more efficient prompt
+    prompt = f"""Extract receipt data as JSON: {{"total": int (pennies), "business": str, "items": [{{"title": str, "quantity": int, "price": int (pennies)}}], "transaction_timestamp": str}}. Return ONLY valid JSON, no explanation.\n\nReceipt text:\n{text_content}"""
 
     response = ai_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,  # Lower temperature for more consistent output
+        max_tokens=1000   # Limit tokens to speed up response
     )
 
     content = response.choices[0].message.content
@@ -98,6 +109,7 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_receipt():
     """Handle receipt upload and processing"""
+    temp_path = None
     try:
         # Check if file is in request
         if 'file' not in request.files:
@@ -111,35 +123,48 @@ def upload_receipt():
         if not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type. Allowed: png, jpg, jpeg, gif, bmp'}), 400
         
-        # Save file temporarily
-        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+        # Save file temporarily with proper extension
+        file_ext = file.filename.rsplit('.', 1)[1].lower()
+        with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as tmp:
             file.save(tmp.name)
             temp_path = tmp.name
         
-        try:
-            # Process the receipt
-            print(f"Processing receipt: {file.filename}")
-            
-            preprocessed_image = preprocess_image(temp_path)
-            text_content = extract_text(preprocessed_image)
-            
-            print(f"Extracted text length: {len(text_content)}")
-            
-            json_data = ai_extract(text_content)
-            
-            # Parse to validate JSON
-            parsed_data = json.loads(json_data)
-            
-            return jsonify({
-                'success': True,
-                'data': parsed_data,
-                'extracted_text': text_content
-            }), 200
+        # Process the receipt
+        print(f"Processing receipt: {file.filename}")
         
-        finally:
-            # Clean up temporary file
-            if os.path.exists(temp_path):
+        preprocessed_image = preprocess_image(temp_path)
+        text_content = extract_text(preprocessed_image)
+        
+        print(f"Extracted text length: {len(text_content)}")
+        
+        # Only send to AI if we have meaningful text
+        if len(text_content.strip()) < 10:
+            return jsonify({'error': 'Could not extract enough text from image'}), 400
+        
+        json_data = ai_extract(text_content)
+        
+        # Parse to validate JSON
+        parsed_data = json.loads(json_data)
+        
+        return jsonify({
+            'success': True,
+            'data': parsed_data,
+            'extracted_text': text_content[:500]  # Limit text in response
+        }), 200
+    
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {str(e)}")
+        return jsonify({'error': 'Invalid JSON from AI'}), 500
+    except Exception as e:
+        print(f"Error processing: {str(e)}")
+        return jsonify({'error': f'Error processing receipt: {str(e)}'}), 500
+    finally:
+        # Clean up temporary file
+        if temp_path and os.path.exists(temp_path):
+            try:
                 os.remove(temp_path)
+            except:
+                pass
     
     except ValueError as e:
         return jsonify({'error': f'API not configured: {str(e)}'}), 500
