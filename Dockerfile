@@ -29,4 +29,4 @@ ENV FLASK_HOST=0.0.0.0
 ENV FLASK_PORT=5000
 
 # Run application with Gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 1 --timeout 120 --access-logfile - --error-logfile - app:app
