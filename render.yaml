@@ -11,8 +11,6 @@ services:
         value: production
       - key: FLASK_HOST
         value: 0.0.0.0
-      - key: FLASK_PORT
-        value: 10000
       - key: TESSERACT_PATH
         value: /usr/bin/tesseract
       - key: GROQ_API_KEY

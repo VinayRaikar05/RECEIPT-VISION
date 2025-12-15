@@ -13,8 +13,14 @@ import tempfile
 # Load environment variables from .env if present
 load_dotenv()
 
-# Configure Tesseract path for Windows
-default_tesseract = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+# Configure Tesseract path
+import platform
+if platform.system() == 'Windows':
+    default_tesseract = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+else:
+    # Linux/Unix path
+    default_tesseract = '/usr/bin/tesseract'
+
 tesseract_path = os.getenv('TESSERACT_PATH') or default_tesseract
 pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
