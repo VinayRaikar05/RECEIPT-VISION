@@ -2,3 +2,5 @@ opencv-python
 pytesseract
 groq
 python-dotenv
+flask
+werkzeug
