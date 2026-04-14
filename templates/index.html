@@ -447,6 +447,7 @@
         const previewPlaceholder = document.getElementById('previewPlaceholder');
         const fileName = document.getElementById('fileName');
         const uploadSection = document.getElementById('uploadSection');
+        const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
         let currentData = null;
 
@@ -485,8 +486,7 @@
                 return;
             }
 
-            const maxSizeBytes = 10 * 1024 * 1024;
-            if (file.size > maxSizeBytes) {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
                 showError('File is too large. Maximum allowed size is 10MB.');
                 return;
             }
@@ -587,15 +587,15 @@
         }
 
         function showError(message) {
+            clearMessages();
             errorMessage.textContent = '❌ ' + message;
             errorMessage.style.display = 'block';
-            successMessage.style.display = 'none';
         }
 
         function showSuccess(message) {
+            clearMessages();
             successMessage.textContent = '✓ ' + message;
             successMessage.style.display = 'block';
-            errorMessage.style.display = 'none';
         }
 
         function clearMessages() {
