@@ -391,7 +391,7 @@
             <div class="error" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
 
-            <div class="upload-grid">
+            <div class="upload-grid" id="uploadSection">
                 <div class="upload-area" id="uploadArea" aria-label="Upload receipt image">
                     <div class="upload-icon">📸</div>
                     <h3>Drop your receipt here</h3>
@@ -446,6 +446,7 @@
         const previewImage = document.getElementById('previewImage');
         const previewPlaceholder = document.getElementById('previewPlaceholder');
         const fileName = document.getElementById('fileName');
+        const uploadSection = document.getElementById('uploadSection');
 
         let currentData = null;
 
@@ -481,6 +482,12 @@
 
             if (!file.type.startsWith('image/')) {
                 showError('Please select a valid image file');
+                return;
+            }
+
+            const maxSizeBytes = 10 * 1024 * 1024;
+            if (file.size > maxSizeBytes) {
+                showError('File is too large. Maximum allowed size is 10MB.');
                 return;
             }
 
@@ -531,6 +538,7 @@
         function displayResult(result) {
             jsonPreview.textContent = JSON.stringify(result.data, null, 2);
             extractedText.textContent = result.extracted_text;
+            uploadSection.style.display = 'none';
             resultArea.style.display = 'grid';
         }
 
@@ -563,6 +571,7 @@
         resetBtn.addEventListener('click', () => {
             fileInput.value = '';
             currentData = null;
+            uploadSection.style.display = 'grid';
             resultArea.style.display = 'none';
             jsonPreview.textContent = '';
             extractedText.textContent = '';
