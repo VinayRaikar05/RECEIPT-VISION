@@ -286,7 +286,6 @@
         .result {
             display: none;
             margin-top: 20px;
-            display: grid;
             gap: 14px;
         }
 
@@ -393,7 +392,7 @@
             <div class="success-message" id="successMessage"></div>
 
             <div class="upload-grid">
-                <div class="upload-area" id="uploadArea" role="button" tabindex="0" aria-label="Upload receipt image">
+                <div class="upload-area" id="uploadArea" aria-label="Upload receipt image">
                     <div class="upload-icon">📸</div>
                     <h3>Drop your receipt here</h3>
                     <p>or choose a file from your device</p>
@@ -450,17 +449,8 @@
 
         let currentData = null;
 
-        uploadArea.addEventListener('click', (e) => {
-            if (e.target.tagName.toLowerCase() === 'button' || e.currentTarget === e.target || e.target.closest('.upload-area')) {
-                fileInput.click();
-            }
-        });
-
-        uploadArea.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                fileInput.click();
-            }
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
         });
 
         fileInput.addEventListener('change', handleFileSelect);
