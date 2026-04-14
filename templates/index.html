@@ -382,7 +382,7 @@
             <p>Upload a receipt image to instantly extract clean JSON with totals, merchant details, and line items. Designed for fast bookkeeping and expense workflows.</p>
             <div class="meta">
                 <span>Drag & Drop Upload</span>
-                <span>Up to 10MB</span>
+                <span id="maxFileSizeTag"></span>
                 <span>PNG / JPG / JPEG / GIF / BMP</span>
             </div>
         </section>
@@ -447,9 +447,12 @@
         const previewPlaceholder = document.getElementById('previewPlaceholder');
         const fileName = document.getElementById('fileName');
         const uploadSection = document.getElementById('uploadSection');
+        const maxFileSizeTag = document.getElementById('maxFileSizeTag');
         const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+        const MAX_FILE_SIZE_MB = MAX_FILE_SIZE_BYTES / (1024 * 1024);
 
         let currentData = null;
+        maxFileSizeTag.textContent = `Up to ${MAX_FILE_SIZE_MB}MB`;
 
         uploadArea.addEventListener('click', () => {
             fileInput.click();
@@ -587,13 +590,13 @@
         }
 
         function showError(message) {
-            clearMessages();
+            successMessage.style.display = 'none';
             errorMessage.textContent = '❌ ' + message;
             errorMessage.style.display = 'block';
         }
 
         function showSuccess(message) {
-            clearMessages();
+            errorMessage.style.display = 'none';
             successMessage.textContent = '✓ ' + message;
             successMessage.style.display = 'block';
         }
