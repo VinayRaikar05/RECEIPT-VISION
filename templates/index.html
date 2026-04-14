@@ -3,259 +3,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt Vision - Receipt Parser</title>
+    <title>Receipt Vision - AI Receipt Parser</title>
     <style>
+        :root {
+            --bg: #070b1a;
+            --panel: rgba(17, 24, 39, 0.72);
+            --panel-border: rgba(148, 163, 184, 0.24);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --primary: #6366f1;
+            --primary-2: #8b5cf6;
+            --success-bg: rgba(22, 163, 74, 0.14);
+            --success-border: rgba(34, 197, 94, 0.4);
+            --error-bg: rgba(239, 68, 68, 0.14);
+            --error-border: rgba(248, 113, 113, 0.45);
+            --card: rgba(15, 23, 42, 0.65);
+            --code: #0b1120;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Inter, "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
             min-height: 100vh;
+            background:
+                radial-gradient(900px 500px at 10% -10%, rgba(99, 102, 241, 0.28), transparent 60%),
+                radial-gradient(800px 500px at 100% 0%, rgba(139, 92, 246, 0.24), transparent 55%),
+                var(--bg);
+            padding: 24px;
+        }
+
+        .shell {
+            width: min(1080px, 100%);
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero,
+        .container {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
+        }
+
+        .hero {
+            padding: 26px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .title-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 40px;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .header h1 {
-            color: #333;
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .upload-area {
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #f8f9ff;
-            margin-bottom: 20px;
-        }
-        
-        .upload-area:hover {
-            border-color: #764ba2;
-            background-color: #f0f2ff;
-        }
-        
-        .upload-area.dragover {
-            border-color: #764ba2;
-            background-color: #e8ebff;
-        }
-        
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        
-        .upload-area p {
-            color: #666;
-            margin-bottom: 10px;
-        }
-        
-        .upload-area .file-input {
-            display: none;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.2s ease;
-            margin: 10px 5px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
-        
-        .btn-secondary:hover {
-            background: #d0d0d0;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .result {
-            display: none;
-            margin-top: 30px;
-        }
-        
-        .result-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .result-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .json-preview {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 6px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-            border-left: 4px solid #c33;
-        }
-        
-        .success-message {
-            background: #efe;
-            color: #3c3;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-            border-left: 4px solid #3c3;
-        }
-        
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: space-between;
+            gap: 12px;
             flex-wrap: wrap;
         }
-        
+
+        .title-row h1 {
+            font-size: clamp(26px, 3.5vw, 38px);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(99, 102, 241, 0.45);
+            background: rgba(99, 102, 241, 0.14);
+            color: #c7d2fe;
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .hero p {
+            color: var(--muted);
+            line-height: 1.65;
+            max-width: 760px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .meta span {
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        .container {
+            padding: 24px;
+        }
+
+        .error,
+        .success-message {
+            display: none;
+            margin-bottom: 18px;
+            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid transparent;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .error {
+            background: var(--error-bg);
+            border-color: var(--error-border);
+            color: #fecaca;
+        }
+
+        .success-message {
+            background: var(--success-bg);
+            border-color: var(--success-border);
+            color: #bbf7d0;
+        }
+
+        .upload-grid {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: 1.55fr 1fr;
+            align-items: stretch;
+        }
+
+        .upload-area {
+            border: 1.8px dashed rgba(129, 140, 248, 0.65);
+            border-radius: 16px;
+            padding: 34px 20px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.5);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            min-height: 260px;
+            display: grid;
+            place-content: center;
+            gap: 10px;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #a5b4fc;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.25);
+            background: rgba(30, 41, 59, 0.62);
+        }
+
+        .upload-icon {
+            font-size: 44px;
+            line-height: 1;
+        }
+
+        .upload-area h3 {
+            font-size: 22px;
+            letter-spacing: -0.01em;
+        }
+
+        .upload-area p {
+            color: var(--muted);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 11px;
+            padding: 11px 16px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #eef2ff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(51, 65, 85, 0.9);
+            color: #e2e8f0;
+            box-shadow: none;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .preview {
+            background: var(--card);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 16px;
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .preview h3 {
+            font-size: 15px;
+            color: #cbd5e1;
+            letter-spacing: 0.01em;
+        }
+
+        .preview img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(2, 6, 23, 0.65);
+            display: none;
+        }
+
+        .preview .placeholder {
+            aspect-ratio: 4 / 3;
+            display: grid;
+            place-content: center;
+            text-align: center;
+            border-radius: 12px;
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 12px;
+        }
+
+        .file-name {
+            color: #c7d2fe;
+            font-weight: 600;
+            font-size: 13px;
+            min-height: 20px;
+            word-break: break-word;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .spinner {
+            border: 3px solid rgba(148, 163, 184, 0.25);
+            border-top: 3px solid #a5b4fc;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .result-section {
+            background: var(--card);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .result-section h3 {
+            margin-bottom: 10px;
+            color: #dbeafe;
+            font-size: 16px;
+        }
+
+        .json-preview {
+            background: var(--code);
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 14px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 12.5px;
+            line-height: 1.55;
+            max-height: 380px;
+            overflow: auto;
+            color: #e2e8f0;
+        }
+
         .extracted-text {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            max-height: 200px;
-            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(2, 6, 23, 0.5);
+            padding: 14px;
             font-size: 13px;
             line-height: 1.6;
-            border: 1px solid #e0e0e0;
+            max-height: 220px;
+            overflow: auto;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
-        
-        .file-name {
-            text-align: center;
-            color: #667eea;
-            font-weight: 600;
-            margin-top: 10px;
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 900px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px;
+            }
+
+            .hero,
+            .container {
+                border-radius: 14px;
+            }
+
+            .hero,
+            .container {
+                padding: 16px;
+            }
+
+            .upload-area {
+                padding: 26px 16px;
+                min-height: 220px;
+            }
+
+            .button-group {
+                justify-content: stretch;
+            }
+
+            .button-group .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📄 Receipt Vision</h1>
-            <p>Upload your receipt image and get structured JSON data</p>
-        </div>
-        
-        <div class="error" id="errorMessage"></div>
-        <div class="success-message" id="successMessage"></div>
-        
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📸</div>
-            <p>Drag and drop your receipt image here</p>
-            <p style="font-size: 14px; color: #999;">or</p>
-            <button class="btn">Click to select file</button>
-            <input type="file" class="file-input" id="fileInput" accept="image/*">
-            <p style="font-size: 12px; color: #999; margin-top: 10px;">
-                Supported: PNG, JPG, JPEG, GIF, BMP
-            </p>
-        </div>
-        
-        <div class="loading" id="loadingArea">
-            <div class="spinner"></div>
-            <p>Processing your receipt...</p>
-        </div>
-        
-        <div class="result" id="resultArea">
-            <div class="result-section">
-                <h3>Extracted Data</h3>
-                <div class="json-preview" id="jsonPreview"></div>
+    <main class="shell">
+        <section class="hero">
+            <div class="title-row">
+                <h1>📄 Receipt Vision</h1>
+                <span class="badge">OCR + AI Extraction</span>
             </div>
-            
-            <div class="result-section">
-                <h3>Extracted Text (OCR)</h3>
-                <div class="extracted-text" id="extractedText"></div>
+            <p>Upload a receipt image to instantly extract clean JSON with totals, merchant details, and line items. Designed for fast bookkeeping and expense workflows.</p>
+            <div class="meta">
+                <span>Drag & Drop Upload</span>
+                <span>Up to 10MB</span>
+                <span>PNG / JPG / JPEG / GIF / BMP</span>
             </div>
-            
-            <div class="button-group">
-                <button class="btn" id="downloadBtn">⬇️ Download JSON</button>
-                <button class="btn btn-secondary" id="resetBtn">↻ Process Another</button>
+        </section>
+
+        <section class="container">
+            <div class="error" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="upload-grid">
+                <div class="upload-area" id="uploadArea" role="button" tabindex="0" aria-label="Upload receipt image">
+                    <div class="upload-icon">📸</div>
+                    <h3>Drop your receipt here</h3>
+                    <p>or choose a file from your device</p>
+                    <button class="btn" type="button">Select Receipt</button>
+                    <input type="file" class="file-input" id="fileInput" accept="image/*">
+                </div>
+
+                <aside class="preview" aria-live="polite">
+                    <h3>Selected File Preview</h3>
+                    <img id="previewImage" alt="Selected receipt preview">
+                    <div class="placeholder" id="previewPlaceholder">No image selected yet.<br>Choose a receipt to preview it here.</div>
+                    <div class="file-name" id="fileName"></div>
+                </aside>
             </div>
-        </div>
-    </div>
-    
+
+            <div class="loading" id="loadingArea">
+                <div class="spinner"></div>
+                <p>Processing your receipt...</p>
+            </div>
+
+            <div class="result" id="resultArea">
+                <div class="result-section">
+                    <h3>Extracted Data</h3>
+                    <div class="json-preview" id="jsonPreview"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>Extracted Text (OCR)</h3>
+                    <div class="extracted-text" id="extractedText"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn" id="downloadBtn" type="button">⬇️ Download JSON</button>
+                    <button class="btn btn-secondary" id="resetBtn" type="button">↻ Process Another</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -267,56 +444,78 @@
         const extractedText = document.getElementById('extractedText');
         const downloadBtn = document.getElementById('downloadBtn');
         const resetBtn = document.getElementById('resetBtn');
-        
+        const previewImage = document.getElementById('previewImage');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const fileName = document.getElementById('fileName');
+
         let currentData = null;
-        
-        // File input click
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        // File selection
+
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target.tagName.toLowerCase() === 'button' || e.currentTarget === e.target || e.target.closest('.upload-area')) {
+                fileInput.click();
+            }
+        });
+
+        uploadArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
         fileInput.addEventListener('change', handleFileSelect);
-        
-        // Drag and drop
+
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
-        
+
         uploadArea.addEventListener('dragleave', () => {
             uploadArea.classList.remove('dragover');
         });
-        
+
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            
+
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 fileInput.files = files;
                 handleFileSelect();
             }
         });
-        
+
         function handleFileSelect() {
             const file = fileInput.files[0];
             if (!file) return;
-            
-            // Validate file type
+
             if (!file.type.startsWith('image/')) {
                 showError('Please select a valid image file');
                 return;
             }
-            
+
+            fileName.textContent = file.name;
+            updatePreview(file);
             uploadReceipt(file);
         }
-        
+
+        function updatePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                previewPlaceholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
         function uploadReceipt(file) {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             showLoading(true);
             clearMessages();
-            
+
             fetch('/upload', {
                 method: 'POST',
                 body: formData
@@ -338,18 +537,16 @@
                 showLoading(false);
             });
         }
-        
+
         function displayResult(result) {
             jsonPreview.textContent = JSON.stringify(result.data, null, 2);
             extractedText.textContent = result.extracted_text;
-            
-            uploadArea.style.display = 'none';
-            resultArea.style.display = 'block';
+            resultArea.style.display = 'grid';
         }
-        
+
         downloadBtn.addEventListener('click', () => {
             if (!currentData) return;
-            
+
             fetch('/download', {
                 method: 'POST',
                 headers: {
@@ -372,29 +569,36 @@
                 showError('Error downloading file: ' + error.message);
             });
         });
-        
+
         resetBtn.addEventListener('click', () => {
             fileInput.value = '';
             currentData = null;
-            uploadArea.style.display = 'block';
             resultArea.style.display = 'none';
+            jsonPreview.textContent = '';
+            extractedText.textContent = '';
+            fileName.textContent = '';
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            previewPlaceholder.style.display = 'grid';
             clearMessages();
         });
-        
+
         function showLoading(show) {
             loadingArea.style.display = show ? 'block' : 'none';
         }
-        
+
         function showError(message) {
             errorMessage.textContent = '❌ ' + message;
             errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
         }
-        
+
         function showSuccess(message) {
             successMessage.textContent = '✓ ' + message;
             successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
         }
-        
+
         function clearMessages() {
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
